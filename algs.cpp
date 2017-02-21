@@ -68,12 +68,12 @@ u64 AlgsFactory::encryptBlockMysty4(u64 key, u64 block) {
   u32 R[5];
   u32 K[4];
   K[0] = key & (u64)0xFFFFFFFF;
-  K[1] = key & ((u64)0xFFFFFFFF << 32);
+  K[1] = key & (((u64)0xFFFFFFFF) << 32);
   K[2] = ~K[1];
   K[3] = ~K[0];
 
   L[0] = block & (u64)0xFFFFFFFF;
-  R[0] = block & ((u64)0xFFFFFFFF << 32);
+  R[0] = (block & (((u64)0xFFFFFFFF) << 32)) >> 32;
 
   for (u32 i=1; i<=4; i++) {
     L[i] = mystyRound(K[i-1], R[i-1]) ^ L[i-1];
@@ -88,10 +88,11 @@ u64 AlgsFactory::encryptBlockMysty4(u64 key, u64 block) {
 Blob AlgsFactory::hashMerkleDamgard(Blob data) {
   int size = data.getSize() / 8 + 1;
   u64* M = new u64[size];
-  M[size-1]=0;
+  M[size-1] = 0;
   u64* H = new u64[size+1];
   H[0] = 0;
   memcpy((u8*)M, data.bytes, data.getSize());
+  *((u8*)M + data.getSize()) = 1;
   for (u32 i=1; i<=size; i++) {
     H[i] = M[i-1] ^ H[i-1] ^ encryptBlockMysty4(H[i-1], M[i-1]);
   }
@@ -164,14 +165,7 @@ regen:
   BitGenGenerateSequence(L89Generator, &seedL89, (u8*)(U.words), 128/8);
   if (U.words[1] >= p.words[1]) goto regen;
   m_pow(&a, &U, &p, &mu1, &Y);
-  /*printf("a: ");
-  l_dump(&a, 'h');
-  printf("p: ");
-  l_dump(&p, 'h');
-  printf("pr_key: ");
-  l_dump(&U, 'h');
-  printf("pub_key: ");
-  l_dump(&Y, 'h');*/
+
   Blob key(32);
   memcpy(key.bytes, (u8*)(U.words), 16);
   memcpy(key.bytes+16, (u8*)(Y.words), 16);

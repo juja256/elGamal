@@ -3,6 +3,7 @@
 #include <string.h>
 #include "eg.h"
 #include "algs.h"
+#include "long_ar.h"
 
 int main(int argc, char const *argv[]) {
   AlgsFactory f;
@@ -23,5 +24,26 @@ int main(int argc, char const *argv[]) {
   printf("%s\n", cms_.getEncoded("test.sig").data);
   bool t = ks.verify(cms_);
   printf("Verification statuses: %d %d\n", v, t);
+  L_NUMBER a,b,c,mu,p,s;
+  l_init_by_len(&a, 128);
+  l_init_by_len(&b, 128);
+  l_init_by_len(&c, 128);
+  l_init_by_str(&p, P);
+  l_init_by_len(&mu, 256);
+  l_init_by_len(&s, 256);
+  a.words[0] = 436534564;
+  a.words[1] = 23543;
+  b.words[0] = 2;
+  b.words[1] = 0;
+
+  m_pre_barret(4, &p, &mu);
+  l_pow(&a, 2, &s);
+  l_dump(&s, 'h');
+  m_pow(&a, &b, &p, &mu, &c);
+  l_dump(&a, 'h');
+  l_dump(&b, 'h');
+  l_dump(&p, 'h');
+  l_dump(&mu, 'h');
+  l_dump(&c, 'h');
   return 0;
 }
