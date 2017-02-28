@@ -45,17 +45,37 @@ Lorem ipsum...
 */
 class SignedMessage {
 public:
+  virtual Blob getEncoded();
+  virtual bool saveToFile(const char* fileName);
+  virtual ~SignedMessage();
+};
+
+class SignedExtendedMessage: public SignedMessage {
+public:
   u32 alg_id;
   u32 hash_id;
+  Blob fn;
   Blob msg;
   Blob hash;
   Blob signature;
   Blob pub_key;
-  SignedMessage();
-  SignedMessage(const char* fileName);
-  Blob getEncoded(const char* fileName);
-  bool saveToFile(const char* fileName);
-  ~SignedMessage();
+  SignedExtendedMessage();
+  SignedExtendedMessage(const char* fileName);
+  Blob getEncoded();
+  ~SignedExtendedMessage();
+};
+
+class SignedBasicMessage: public SignedMessage { /*Dirty Hack for this lab*/
+public:
+  Blob fn;
+  Blob hash;
+  Blob k;
+  Blob S;
+  Blob pub_key;
+  SignedBasicMessage();
+  SignedBasicMessage(const char* fileName);
+  Blob getEncoded();
+  ~SignedBasicMessage();
 };
 
 class AbonentKeyStore {
@@ -67,9 +87,12 @@ public:
   AbonentKeyStore(const char* keyFilePath);
   int generateKey(u32 alg_id, int key_len);
   int deleteKey(u32 i);
-  SignedMessage sign(u32 key_id, u32 hash_id, Blob data);
+  SignedExtendedMessage signExtended(u32 key_id, u32 hash_id, Blob data);
+  SignedBasicMessage signBasic(u32 key_id, u32 hash_id, Blob data);
+  SignedBasicMessage signBasic(u32 key_id, u32 hash_id, const char* fn); // from file
   PUBLIC_KEY getPublicKey(u32 key_id);
-  bool verify(SignedMessage& msg);
+  bool verify(SignedExtendedMessage& msg);
+  bool verify(SignedBasicMessage& msg, Blob data, u32 hash_id, u32 alg_id);
   ~AbonentKeyStore();
 };
 

@@ -21,6 +21,7 @@ public:
   u64 encryptBlockMysty4(u64 key, u64 block);
   Blob hashMerkleDamgard(Blob data);
   Blob signElGamal5(Blob key, Blob hash);
+  Blob _signElGamal5Debug(Blob key, Blob hash, const char* fn);
   bool verifyElGamal5(Blob pub_key, Blob signature, Blob hash);
   Blob generateKeyElGamal5();
 };

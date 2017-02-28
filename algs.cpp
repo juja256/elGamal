@@ -5,6 +5,7 @@
 #include "generators.h"
 #include <string.h>
 #include <stdio.h>
+#include <string>
 
 #define MSB13 0xFFF80000
 #define HASH_ROUNDS 10
@@ -140,6 +141,63 @@ Blob AlgsFactory::signElGamal5(Blob key, Blob h) {
   Blob signature(32);
   memcpy(signature.bytes, (u8*)(k.words), 16);
   memcpy(signature.bytes + 16, (u8*)(S.words), 16);
+  l_free(&H); l_free(&U); l_free(&Z); l_free(&UZ); l_free(&k); l_free(&g); l_free(&S);
+  return signature;
+}
+
+Blob AlgsFactory::_signElGamal5Debug(Blob key, Blob h, const char* fn) {
+  L_NUMBER H, x, U, Z, UZ, k, g, S;
+  l_init_by_len(&H, 128);
+  l_init_by_len(&U, 128);
+  l_init_by_len(&Z, 128);
+  l_init_by_len(&UZ, 128);
+  l_init_by_len(&k, 128);
+  l_init_by_len(&g, 128);
+  l_init_by_len(&S, 128);
+
+  memcpy((u8*)(H.words), h.bytes, 8);
+  H.words[1] = 0x00FFFFFFFFFFFF00;
+  x.words = (WORD*)(key.bytes);
+  x.len = key.getSize() / (ARCH / 8);
+  BitGenGenerateSequence(L89Generator, &seedL89, (u8*)(U.words), 128 / 8);
+
+  char u_[512];
+  sprintf(u_, HEX_FORMAT HEX_FORMAT "\0", U.words[1], U.words[0]);
+
+  m_pow(&a, &U, &p, &mu1, &Z); // Z = a^U mod p
+
+  char z_[512];
+  sprintf(z_, HEX_FORMAT HEX_FORMAT "\0", Z.words[1], Z.words[0]);
+
+  m_mul(&U, &Z, &q, &mu2, &UZ); // UZ = UZ mod q
+  m_mul(&x, &H, &q, &mu2, &H); // H = xH mod q
+  m_sub(&H, &Z, &q, &H); // H = H - Z mod q
+  m_pow(&H, &d, &q, &mu2, &k); // k = H^(q-2) mod q
+  m_mul(&k, &UZ, &q, &mu2, &k); // k = kUZ mod q
+  m_pow(&Z, &d, &q, &mu2, &Z); // Z = Z^(q-2) mod q
+  m_mul(&H, &Z, &q, &mu2, &g); // g = HZ mod q
+
+  char g_[512];
+  sprintf(g_, HEX_FORMAT HEX_FORMAT "\0", g.words[1], g.words[0]);
+
+  m_pow(&a, &g, &p, &mu1, &S); // S = a^g mod p
+  Blob signature(32);
+  memcpy(signature.bytes, (u8*)(k.words), 16);
+  memcpy(signature.bytes + 16, (u8*)(S.words), 16);
+
+
+
+  FILE* debug = fopen((std::string(fn) + ".sig.add").c_str(), "w");
+  const char* fmt =
+    "------------------------------\n"
+    "%s\n"
+    "U = %s\n"
+    "Z = %s\n"
+    "G = %s\n"
+    "------------------------------\0";
+  fprintf(debug, fmt, fn, u_, z_, g_);
+  fclose(debug);
+
   l_free(&H); l_free(&U); l_free(&Z); l_free(&UZ); l_free(&k); l_free(&g); l_free(&S);
   return signature;
 }

@@ -35,10 +35,10 @@ int AbonentKeyStore::deleteKey(u32 key_id) {
   return 0;
 }
 
-SignedMessage AbonentKeyStore::sign(u32 key_id, u32 hash_id, Blob data) {
+SignedExtendedMessage AbonentKeyStore::signExtended(u32 key_id, u32 hash_id, Blob data) {
   if ((key_id >= size) || (this->pr_key[key_id].key.getSize() == 0))
     throw CommonException(KEY_NOT_FOUND);
-  SignedMessage sm;
+  SignedExtendedMessage sm;
   Blob h, kS;
   AlgsFactory f;
   switch (hash_id) {
@@ -69,7 +69,7 @@ PUBLIC_KEY AbonentKeyStore::getPublicKey(u32 key_id) {
   return k;
 }
 
-bool AbonentKeyStore::verify(SignedMessage& msg) {
+bool AbonentKeyStore::verify(SignedExtendedMessage& msg) {
   AlgsFactory f;
   if ((msg.alg_id != SIGN_EL_GAMAL_5) || (msg.hash_id != HASH_MERKLE_DAMGARD)) {
     throw CommonException(UNKNOWN_ALG);
@@ -83,4 +83,67 @@ bool AbonentKeyStore::verify(SignedMessage& msg) {
 
 AbonentKeyStore::~AbonentKeyStore() {
 
+}
+
+bool AbonentKeyStore::verify(SignedBasicMessage& msg, Blob data, u32 hash_id, u32 alg_id) {
+  AlgsFactory f;
+  if ((alg_id != SIGN_EL_GAMAL_5) || (hash_id != HASH_MERKLE_DAMGARD)) {
+    throw CommonException(UNKNOWN_ALG);
+  }
+  Blob hash = f.hashMerkleDamgard(data);
+  if (memcmp(hash.bytes, msg.hash.bytes, hash.getSize())) {
+    throw CommonException(HASH_NOT_VALID);
+  }
+  Blob signature(32);
+  memcpy(signature.bytes, msg.k.bytes, 16);
+  memcpy(signature.bytes+16, msg.S.bytes, 16);
+  return f.verifyElGamal5(msg.pub_key, signature, hash);
+}
+
+SignedBasicMessage AbonentKeyStore::signBasic(u32 key_id, u32 hash_id, const char* fn) {
+  Blob data = loadBlob(fn);
+  if ((key_id >= size) || (this->pr_key[key_id].key.getSize() == 0))
+    throw CommonException(KEY_NOT_FOUND);
+  SignedBasicMessage sm;
+  Blob h, kS;
+  AlgsFactory f;
+  switch (hash_id) {
+  case HASH_MERKLE_DAMGARD:
+    if (this->pr_key[key_id].alg_id != SIGN_EL_GAMAL_5)
+      throw CommonException(UNKNOWN_ALG);
+    h = f.hashMerkleDamgard(data);
+    kS = f._signElGamal5Debug(this->pr_key[key_id].key, h, fn);
+    sm.hash = h;
+    sm.fn = Blob(fn);
+    sm.k = Blob(kS.bytes, 16);
+    sm.S = Blob(kS.bytes + 16, 16);
+    sm.pub_key = this->pub_key[key_id].key.copy();
+    break;
+  default:
+    throw CommonException(UNKNOWN_ALG);
+  }
+  return sm;
+}
+
+SignedBasicMessage AbonentKeyStore::signBasic(u32 key_id, u32 hash_id, Blob data) {
+  if ((key_id >= size) || (this->pr_key[key_id].key.getSize() == 0))
+    throw CommonException(KEY_NOT_FOUND);
+  SignedBasicMessage sm;
+  Blob h, kS;
+  AlgsFactory f;
+  switch (hash_id) {
+  case HASH_MERKLE_DAMGARD:
+    if (this->pr_key[key_id].alg_id != SIGN_EL_GAMAL_5)
+      throw CommonException(UNKNOWN_ALG);
+    h = f.hashMerkleDamgard(data);
+    kS = f.signElGamal5(this->pr_key[key_id].key, h);
+    sm.hash = h;
+    sm.k = Blob(kS.bytes, 16);
+    sm.S = Blob(kS.bytes + 16, 16);
+    sm.pub_key = this->pub_key[key_id].key.copy();
+    break;
+  default:
+    throw CommonException(UNKNOWN_ALG);
+  }
+  return sm;
 }
