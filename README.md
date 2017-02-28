@@ -12,6 +12,6 @@ hash functions and signing-verification algorithms in El-Gamal protocol.
 
 For building simply run make. It works only under x64 arch. 
 
-For signing run ./test -sign <file>
+For signing run ./test -sign file
 
-For checking run ./test -check <file> <signature>
+For checking run ./test -check file signature
