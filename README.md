@@ -11,6 +11,6 @@ Level down there is class AlgsFactory that provides realisations of some cryptog
 
 For building simply run make. It works only under x64 arch. 
 
-For signing run ./test -sign file
+For signing run `./test -sign <file>`
 
-For checking run ./test -check file signature
+For checking run `./test -check <file> <signature>`
