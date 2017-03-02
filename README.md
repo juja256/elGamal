@@ -7,8 +7,7 @@ Architecture of application is quite simple, but there presented few levels of l
 https://github.com/juja256/long_arithmetic
 
 On the top level there is class AbonentKeyStore - memory storage for user generated keys and SignedMessage - class representing signed messages in specific format.
-Level down there is class AlgsFactory that provides realisations of some cryptographic primitives such block ciphers,
-hash functions and signing-verification algorithms in El-Gamal protocol.
+Level down there is class AlgsFactory that provides realisations of some cryptographic primitives such block ciphers, hash functions and signing-verification algorithms in El-Gamal protocol.
 
 For building simply run make. It works only under x64 arch. 
 
