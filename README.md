@@ -14,3 +14,4 @@ For building simply run make. It works only under x64 arch.
 For signing run `./test -sign <file>`
 
 For checking run `./test -check <file> <signature>`
+
