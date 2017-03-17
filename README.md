@@ -1,4 +1,4 @@
-#Mini Digital Signature Protocol Realisation
+# Mini Digital Signature Protocol Realisation
 
 It utilizes some variation of El-Gamal digital signature scheme along with hash function built with Merkle-Damgard scheme.
 
